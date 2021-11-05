@@ -2,6 +2,8 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr
 
+from schemas.token import Token
+
 
 # Shared properties
 class UserBase(BaseModel):
@@ -33,6 +35,9 @@ class UserInDBBase(UserBase):
 class User(UserInDBBase):
     pass
 
+class UserWithToken(BaseModel):
+    user: User
+    token: Token
 
 # Additional properties stored in DB
 class UserInDB(UserInDBBase):
