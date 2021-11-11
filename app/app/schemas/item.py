@@ -1,18 +1,24 @@
 from typing import Optional
-
+from datetime import date
 from pydantic import BaseModel
 
 
 # Shared properties
 class ItemBase(BaseModel):
-    title: Optional[str] = None
+    sku: Optional[str] = None
+    type: Optional[str] = None
     description: Optional[str] = None
-
+    price: Optional[float] = None
+    quantity: Optional[int] = None
+    qaod: Optional[str] = None #quantity at-of date
 
 # Properties to receive on item creation
 class ItemCreate(ItemBase):
-    title: str
-
+    sku: str
+    type: str
+    price: float
+    quantity: int
+    qaod: str
 
 # Properties to receive on item update
 class ItemUpdate(ItemBase):
@@ -22,7 +28,11 @@ class ItemUpdate(ItemBase):
 # Properties shared by models stored in DB
 class ItemInDBBase(ItemBase):
     id: int
-    title: str
+    sku: str
+    type: str
+    price: float
+    quantity: int
+    qaod: str
     owner_id: int
 
     class Config:
@@ -31,6 +41,7 @@ class ItemInDBBase(ItemBase):
 
 # Properties to return to client
 class Item(ItemInDBBase):
+    qaod: date
     pass
 
 
