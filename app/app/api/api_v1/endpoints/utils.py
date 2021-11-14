@@ -6,7 +6,9 @@ from pydantic.networks import EmailStr
 import models, schemas
 from api import deps
 from core.celery_app import celery_app
+from schemas.objectKey import ObjectKey
 from utils import send_test_email
+from aws_utils import create_presigned_post
 
 router = APIRouter()
 
@@ -33,3 +35,12 @@ def test_email(
     """
     send_test_email(email_to=email_to)
     return {"msg": "Test email sent"}
+
+
+@router.post("/upload-presigned-link")
+def test_aws(
+    obj: ObjectKey,
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    return create_presigned_post("qr-product-details", obj.object_key)
+

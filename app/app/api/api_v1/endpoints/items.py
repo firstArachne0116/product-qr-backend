@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 import crud, models, schemas
 from api import deps
+from aws_utils import delete_s3_object
 
 router = APIRouter()
 
@@ -114,6 +115,25 @@ def read_item(
     if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
         raise HTTPException(status_code=400, detail="Not enough permissions")
     return item
+
+
+@router.delete("/file")
+def delete_file(
+    *,
+    db: Session = Depends(deps.get_db),
+    obj: schemas.ObjectKey,
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Delete a file.
+    """
+    id = int(obj.object_key.split('-')[0])
+    item = crud.item.get(db=db, id=id)
+    if not item:
+        raise HTTPException(status_code=403, detail="Item not found")
+    if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
+        raise HTTPException(status_code=400, detail="Not enough permissions")
+    return delete_s3_object('qr-product-details', obj.object_key)
 
 
 @router.delete("/{id}", response_model=schemas.Item)

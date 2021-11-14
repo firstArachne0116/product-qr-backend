@@ -11,6 +11,11 @@ class ItemBase(BaseModel):
     price: Optional[float] = None
     quantity: Optional[int] = None
     qaod: Optional[str] = None #quantity at-of date
+    logo: Optional[str] = None
+    background: Optional[str] = None
+    headerText: Optional[str] = None
+    headerColor: Optional[str] = None
+    subHeaderText: Optional[str] = None
 
 # Properties to receive on item creation
 class ItemCreate(ItemBase):
