@@ -94,7 +94,7 @@ def update_item(
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
-        raise HTTPException(status_code=400, detail="Not enough permissions")
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     item = crud.item.update(db=db, db_obj=item, obj_in=item_in)
     return item
 
@@ -113,7 +113,7 @@ def read_item(
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
-        raise HTTPException(status_code=400, detail="Not enough permissions")
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     return item
 
 
@@ -132,7 +132,7 @@ def delete_file(
     if not item:
         raise HTTPException(status_code=403, detail="Item not found")
     if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
-        raise HTTPException(status_code=400, detail="Not enough permissions")
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     return delete_s3_object('qr-product-details', obj.object_key)
 
 
@@ -150,7 +150,45 @@ def delete_item(
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
-        raise HTTPException(status_code=400, detail="Not enough permissions")
+        raise HTTPException(status_code=403, detail="Not enough permissions")
     item = crud.item.remove(db=db, id=id)
     return item
 
+
+@router.get("/{id}/assets", response_model=List[schemas.Asset], tags=["assets"])
+def get_item_assets(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: int,
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    get all assets belong to an item
+    """
+    item = crud.item.get(db=db, id=id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    assets =  crud.asset.get_multi_by_item(db=db, item_id=id)
+    return assets
+
+
+@router.post("/{id}/assets", response_model=schemas.Asset, tags=["assets"])
+def create_asset(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: int,
+    obj_in: schemas.AssetCreate,
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Create new asset.
+    """
+    item = crud.item.get(db=db, id=id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    asset = crud.asset.create_with_item(db=db, obj_in=obj_in, item_id=id)
+    return asset

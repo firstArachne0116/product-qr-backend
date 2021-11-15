@@ -24,3 +24,4 @@ class Item(Base):
     subHeaderText = Column(String, default="")
     owner_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"))
     owner = relationship("User", back_populates="items")
+    assets = relationship("Asset", back_populates="item")
