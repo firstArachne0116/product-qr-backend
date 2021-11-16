@@ -3,12 +3,13 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from pydantic.networks import EmailStr
 
-import models, schemas
+import models
+import schemas
 from api import deps
 from core.celery_app import celery_app
 from schemas.objectKey import ObjectKey
 from utils import send_test_email
-from aws_utils import create_presigned_post
+from aws_utils import create_presigned_post, create_presigned_url
 
 router = APIRouter()
 
@@ -44,3 +45,10 @@ def test_aws(
 ) -> Any:
     return create_presigned_post("qr-product-details", obj.object_key)
 
+
+@router.post("/download-presigned-link")
+def test_aws(
+    obj: ObjectKey,
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    return create_presigned_url("qr-product-details", obj.object_key)

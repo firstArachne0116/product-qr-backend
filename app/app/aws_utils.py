@@ -5,6 +5,37 @@ from botocore.client import Config
 
 from core.config import settings
 
+
+def create_presigned_url(bucket_name, object_name, expiration=3600):
+    """Generate a presigned URL to share an S3 object
+
+    :param bucket_name: string
+    :param object_name: string
+    :param expiration: Time in seconds for the presigned URL to remain valid
+    :return: Presigned URL as string. If error, returns None.
+    """
+
+    # Generate a presigned URL for the S3 object
+    s3_client = boto3.client(
+        's3',
+        'us-east-2',
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        config=Config(signature_version='s3v4')
+    )
+    try:
+        response = s3_client.generate_presigned_url('get_object',
+                                                    Params={'Bucket': bucket_name,
+                                                            'Key': object_name},
+                                                    ExpiresIn=expiration)
+    except ClientError as e:
+        logging.error(e)
+        return None
+
+    # The response contains the presigned URL
+    return response
+
+
 def create_presigned_post(bucket_name, object_name,
                           fields=None, conditions=None, expiration=3600):
     """Generate a presigned URL S3 POST request to upload a file
@@ -41,6 +72,7 @@ def create_presigned_post(bucket_name, object_name,
     # The response contains the presigned URL and required fields
     return response
 
+
 def delete_s3_object(bucket_name, object_key):
     """Delete an object in s3 bucket
 
@@ -61,4 +93,3 @@ def delete_s3_object(bucket_name, object_key):
     delete = s3_client.delete_object(Bucket=bucket_name, Key=object_key)
     print(delete)
     return delete
-
