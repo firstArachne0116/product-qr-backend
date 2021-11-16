@@ -1,9 +1,15 @@
+import io
+import qrcode
+import qrcode.image.svg
+
 from typing import Any, List
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 
-import crud, models, schemas
+import crud
+import models
+import schemas
 from api import deps
 from aws_utils import delete_s3_object
 
@@ -69,6 +75,7 @@ def delete_item(
     result = crud.item.remove_multi(db=db, ids=ids)
     return result
 
+
 @router.post("/upload", response_model=List[schemas.Item])
 def upload_items(
     file: UploadFile = File(...),
@@ -78,6 +85,7 @@ def upload_items(
 ) -> Any:
     items = crud.item.import_from_sheet(db=db, file=file, owner_id=current_user.id)
     return items
+
 
 @router.put("/{id}", response_model=schemas.Item)
 def update_item(
@@ -170,7 +178,7 @@ def get_item_assets(
         raise HTTPException(status_code=404, detail="Item not found")
     if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    assets =  crud.asset.get_multi_by_item(db=db, item_id=id)
+    assets = crud.asset.get_multi_by_item(db=db, item_id=id)
     return assets
 
 
@@ -192,3 +200,48 @@ def create_asset(
         raise HTTPException(status_code=403, detail="Not enough permissions")
     asset = crud.asset.create_with_item(db=db, obj_in=obj_in, item_id=id)
     return asset
+
+
+@router.get("/{id}/qrcode", response_model=str)
+def get_item_qrcode(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: int,
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Generate QR Code
+    """
+    item = crud.item.get(db=db, id=id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    qr = qrcode.QRCode()
+    qr.add_data('https://mmlar.com/' + item.hash)
+    img = qr.make_image(image_factory=qrcode.image.svg.SvgFragmentImage)
+    file_like = io.BytesIO()
+    img.save(file_like)
+    file_like.seek(0)
+    return file_like.read()
+
+
+@router.post("/{id}/refreshHash", response_model=schemas.Item)
+def refresh_item_hash(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: int,
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Refresh Item Hash
+    """
+    item = crud.item.get(db=db, id=id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    item = crud.item.refresh_hash(db=db, db_obj=item)
+    return item

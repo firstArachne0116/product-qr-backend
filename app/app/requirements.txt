@@ -139,6 +139,7 @@ python-multipart==0.0.5
 python-slugify==5.0.2
 pytz==2021.1
 PyYAML==5.4.1
+qrcode==7.3.1
 queuelib==1.6.2
 raven==6.10.0
 regex==2021.4.4

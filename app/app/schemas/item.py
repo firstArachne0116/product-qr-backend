@@ -10,7 +10,7 @@ class ItemBase(BaseModel):
     description: Optional[str] = None
     price: Optional[float] = None
     quantity: Optional[int] = None
-    qaod: Optional[str] = None #quantity at-of date
+    qaod: Optional[str] = None  # quantity at-of date
     logo: Optional[str] = None
     background: Optional[str] = None
     headerText: Optional[str] = None
@@ -18,6 +18,8 @@ class ItemBase(BaseModel):
     subHeaderText: Optional[str] = None
 
 # Properties to receive on item creation
+
+
 class ItemCreate(ItemBase):
     sku: str
     type: str
@@ -26,6 +28,8 @@ class ItemCreate(ItemBase):
     qaod: str
 
 # Properties to receive on item update
+
+
 class ItemUpdate(ItemBase):
     pass
 
@@ -39,6 +43,7 @@ class ItemInDBBase(ItemBase):
     quantity: int
     qaod: str
     owner_id: int
+    hash: str
 
     class Config:
         orm_mode = True

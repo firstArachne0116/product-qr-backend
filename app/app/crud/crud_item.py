@@ -1,6 +1,8 @@
 from fastapi import UploadFile
-import pandas, io
+import pandas
+import io
 from typing import List
+from secrets import token_urlsafe
 
 from fastapi.encoders import jsonable_encoder
 from pandas._libs.tslibs import NaT
@@ -16,7 +18,7 @@ class CRUDItem(CRUDBase[Item, ItemCreate, ItemUpdate]):
         self, db: Session, *, obj_in: ItemCreate, owner_id: int
     ) -> Item:
         obj_in_data = jsonable_encoder(obj_in)
-        db_obj = self.model(**obj_in_data, owner_id=owner_id)
+        db_obj = self.model(**obj_in_data, owner_id=owner_id, hash=token_urlsafe(16))
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
@@ -37,6 +39,7 @@ class CRUDItem(CRUDBase[Item, ItemCreate, ItemUpdate]):
             # .limit(limit)
             .all()
         )
+
     def get_multi_by_ids(
         self,
         db: Session,
@@ -48,6 +51,7 @@ class CRUDItem(CRUDBase[Item, ItemCreate, ItemUpdate]):
             .filter(Item.id.in_(ids))
             .all()
         )
+
     def import_from_sheet(
         self,
         db: Session,
@@ -77,7 +81,22 @@ class CRUDItem(CRUDBase[Item, ItemCreate, ItemUpdate]):
                 qaod=date,
             ))
         for i in range(len(item_list)):
-            item_list[i] = self.create_with_owner(db=db, obj_in=item_list[i], owner_id=owner_id)
+            item_list[i] = self.create_with_owner(
+                db=db, obj_in=item_list[i], owner_id=owner_id)
         return item_list
+
+    def refresh_hash(
+        self,
+        db: Session,
+        *,
+        db_obj: Item,
+    ) -> Item:
+        db_obj.hash = token_urlsafe(16)
+        print(db_obj.hash)
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+
 
 item = CRUDItem(Item)
