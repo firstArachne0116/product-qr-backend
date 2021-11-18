@@ -1,7 +1,7 @@
 from fastapi import UploadFile
 import pandas
 import io
-from typing import List
+from typing import List, Optional
 from secrets import token_urlsafe
 
 from fastapi.encoders import jsonable_encoder
@@ -97,6 +97,9 @@ class CRUDItem(CRUDBase[Item, ItemCreate, ItemUpdate]):
         db.commit()
         db.refresh(db_obj)
         return db_obj
+
+    def get_by_hash(self, db: Session, hash: str) -> Optional[Item]:
+        return db.query(self.model).filter(self.model.hash == hash).first()
 
 
 item = CRUDItem(Item)

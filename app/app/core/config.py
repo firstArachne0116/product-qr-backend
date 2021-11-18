@@ -83,6 +83,7 @@ class Settings(BaseSettings):
     USERS_OPEN_REGISTRATION: bool = False
     AWS_ACCESS_KEY_ID: str
     AWS_SECRET_ACCESS_KEY: str
+    MENU_APP_BASE_URL: str
 
     class Config:
         env_file = ".env"

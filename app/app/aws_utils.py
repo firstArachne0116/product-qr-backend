@@ -6,12 +6,13 @@ from botocore.client import Config
 from core.config import settings
 
 
-def create_presigned_url(bucket_name, object_name, expiration=3600):
+def create_presigned_url(bucket_name, object_name, expiration=3600, http_method=None):
     """Generate a presigned URL to share an S3 object
 
     :param bucket_name: string
     :param object_name: string
     :param expiration: Time in seconds for the presigned URL to remain valid
+    :param http_method: HTTP method to use (GET, etc.)
     :return: Presigned URL as string. If error, returns None.
     """
 
@@ -27,7 +28,8 @@ def create_presigned_url(bucket_name, object_name, expiration=3600):
         response = s3_client.generate_presigned_url('get_object',
                                                     Params={'Bucket': bucket_name,
                                                             'Key': object_name},
-                                                    ExpiresIn=expiration)
+                                                    ExpiresIn=expiration,
+                                                    HttpMethod=http_method)
     except ClientError as e:
         logging.error(e)
         return None

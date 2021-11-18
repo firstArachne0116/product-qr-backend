@@ -11,7 +11,8 @@ import crud
 import models
 import schemas
 from api import deps
-from aws_utils import delete_s3_object
+from aws_utils import create_presigned_url, delete_s3_object
+from core.config import settings
 
 router = APIRouter()
 
@@ -85,6 +86,30 @@ def upload_items(
 ) -> Any:
     items = crud.item.import_from_sheet(db=db, file=file, owner_id=current_user.id)
     return items
+
+
+@router.get("/hash/{hash}")
+def get_item_by_hash(
+    *,
+    db: Session = Depends(deps.get_db),
+    hash: str,
+) -> Any:
+    """
+    Get Item By Hash
+    """
+    print(hash)
+    item = crud.item.get_by_hash(db=db, hash=hash)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    assets = crud.asset.get_multi_by_item(db=db, item_id=item.id)
+    if len(item.logo) > 0:
+        item.logo = create_presigned_url(
+                'qr-product-details', str(item.id) + '-logo-' + item.logo)
+    for asset in assets:
+        if asset.type == 'video' or asset.type == 'doc':
+            asset.presigned_link = create_presigned_url(
+                'qr-product-details', str(item.id) + '-' + str(asset.id) + '-' + asset.link)
+    return {"item": item, "assets": assets}
 
 
 @router.put("/{id}", response_model=schemas.Item)
@@ -219,7 +244,7 @@ def get_item_qrcode(
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     qr = qrcode.QRCode()
-    qr.add_data('https://mmlar.com/' + item.hash)
+    qr.add_data(settings.MENU_APP_BASE_URL + item.hash)
     img = qr.make_image(image_factory=qrcode.image.svg.SvgFragmentImage)
     file_like = io.BytesIO()
     img.save(file_like)

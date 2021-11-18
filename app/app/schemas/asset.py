@@ -39,6 +39,7 @@ class AssetInDBBase(AssetBase):
 
 # Properties to return to client
 class Asset(AssetInDBBase):
+    presigned_link: Optional[str]
     pass
 
 
