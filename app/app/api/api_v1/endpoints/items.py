@@ -104,11 +104,11 @@ def get_item_by_hash(
     assets = crud.asset.get_multi_by_item(db=db, item_id=item.id)
     if len(item.logo) > 0:
         item.logo = create_presigned_url(
-                'qr-product-details', str(item.id) + '-logo-' + item.logo)
+                settings.AWS_S3_BUCKET_NAME, str(item.id) + '-logo-' + item.logo)
     for asset in assets:
         if asset.type == 'video' or asset.type == 'doc':
             asset.presigned_link = create_presigned_url(
-                'qr-product-details', str(item.id) + '-' + str(asset.id) + '-' + asset.link)
+                settings.AWS_S3_BUCKET_NAME, str(item.id) + '-' + str(asset.id) + '-' + asset.link)
     return {"item": item, "assets": assets}
 
 
@@ -166,7 +166,7 @@ def delete_file(
         raise HTTPException(status_code=403, detail="Item not found")
     if not crud.user.is_superuser(current_user) and (item.owner_id != current_user.id):
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    return delete_s3_object('qr-product-details', obj.object_key)
+    return delete_s3_object(settings.AWS_S3_BUCKET_NAME, obj.object_key)
 
 
 @router.delete("/{id}", response_model=schemas.Item)

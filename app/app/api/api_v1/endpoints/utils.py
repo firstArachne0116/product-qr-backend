@@ -11,6 +11,8 @@ from schemas.objectKey import ObjectKey
 from utils import send_test_email
 from aws_utils import create_presigned_post, create_presigned_url
 
+from core.config import settings
+
 router = APIRouter()
 
 
@@ -43,7 +45,7 @@ def test_aws(
     obj: ObjectKey,
     current_user: models.User = Depends(deps.get_current_user),
 ) -> Any:
-    return create_presigned_post("qr-product-details", obj.object_key)
+    return create_presigned_post(settings.AWS_S3_BUCKET_NAME, obj.object_key)
 
 
 @router.post("/download-presigned-link")
@@ -51,4 +53,4 @@ def test_aws(
     obj: ObjectKey,
     current_user: models.User = Depends(deps.get_current_user),
 ) -> Any:
-    return create_presigned_url("qr-product-details", obj.object_key)
+    return create_presigned_url(settings.AWS_S3_BUCKET_NAME, obj.object_key)
