@@ -244,7 +244,7 @@ def get_item_qrcode(
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     qr = qrcode.QRCode()
-    qr.add_data(settings.MENU_APP_BASE_URL + item.hash)
+    qr.add_data(settings.MENU_APP_BASE_URL + '/' + item.hash)
     img = qr.make_image(image_factory=qrcode.image.svg.SvgFragmentImage)
     file_like = io.BytesIO()
     img.save(file_like)
